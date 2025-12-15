@@ -1,5 +1,6 @@
 import "../global.css";
 import { useState, useEffect } from 'react';
+import { sendDomToN8n } from '../services/n8nApi';
 
 export const Popup = () => {
   const [dom, setDom] = useState<string>('');
@@ -7,6 +8,8 @@ export const Popup = () => {
   const [url, setUrl] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [showRaw, setShowRaw] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [apiStatus, setApiStatus] = useState<string>('');
 
   // Function to strip HTML tags and get clean text
   const stripHtmlTags = (html: string): string => {
@@ -41,6 +44,56 @@ export const Popup = () => {
     alert('Copied to clipboard!');
   };
 
+  // const sendToN8n = async () => {
+  //   setSending(true);
+  //   setApiStatus('Sending...');
+    
+  //   try {
+  //     const result = await sendDomToN8n({
+  //       url: url,
+  //       dom: dom,
+  //       textContent: textContent,
+  //       timestamp: new Date().toISOString()
+  //     });
+
+  //     if (result.success) {
+  //       setApiStatus('✅ Successfully sent to n8n!');
+  //       setTimeout(() => setApiStatus(''), 3000);
+  //     } else {
+  //       setApiStatus(`❌ Error: ${result.error}`);
+  //     }
+  //   } catch (error) {
+  //     setApiStatus(`❌ Failed to send: ${error}`);
+  //   } finally {
+  //     setSending(false);
+  //   }
+  // };
+
+  const sendToN8n = async () => {
+  setSending(true);
+  setApiStatus('Sending...');
+  
+  try {
+    const result = await sendDomToN8n({
+      url: url,
+      textContent: textContent,  // Only sending stripped text
+      timestamp: new Date().toISOString()
+    });
+
+    if (result.success) {
+      setApiStatus('✅ Successfully sent to n8n!');
+      setTimeout(() => setApiStatus(''), 3000);
+    } else {
+      setApiStatus(`❌ Error: ${result.error}`);
+    }
+  } catch (error) {
+    setApiStatus(`❌ Failed to send: ${error}`);
+  } finally {
+    setSending(false);
+  }
+};
+  
+
   return (
     <div className="p-4 h-full overflow-hidden flex flex-col">
       <h1 className="text-xl font-bold mb-2">DOM Reader</h1>
@@ -54,7 +107,7 @@ export const Popup = () => {
             Length: {(showRaw ? dom : textContent).length.toLocaleString()} characters
           </p>
           
-          <div className="flex gap-2 mb-2">
+          <div className="flex gap-2 mb-2 flex-wrap">
             <button 
               onClick={copyToClipboard}
               className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
@@ -67,7 +120,24 @@ export const Popup = () => {
             >
               {showRaw ? 'Show Text Only' : 'Show Raw HTML'}
             </button>
+            <button 
+              onClick={sendToN8n}
+              disabled={sending}
+              className={`${
+                sending 
+                  ? 'bg-green-300' 
+                  : 'bg-green-500 hover:bg-green-600'
+              } text-white px-4 py-2 rounded disabled:cursor-not-allowed`}
+            >
+              {sending ? 'Sending...' : 'Send to n8n'}
+            </button>
           </div>
+          
+          {apiStatus && (
+            <div className="text-sm mb-2 p-2 bg-gray-100 rounded">
+              {apiStatus}
+            </div>
+          )}
           
           <pre className="text-xs bg-gray-100 p-2 overflow-auto flex-1 rounded whitespace-pre-wrap">
             {(showRaw ? dom : textContent).substring(0, 5000)}...

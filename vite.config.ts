@@ -14,7 +14,7 @@ export default defineConfig({
         { src: "src/chrome-extension/public/32.png", dest: "./public" },
         { src: "src/chrome-extension/public/48.png", dest: "./public" },
         { src: "src/chrome-extension/public/192.png", dest: "./public" },
-        { src: "src/chrome-extension/content.js", dest: "." },  // <-- ADD THIS
+        { src: "src/chrome-extension/content.js", dest: "." },  // Copy content.js as-is
       ],
     }),
   ],
@@ -26,6 +26,7 @@ export default defineConfig({
       input: {
         popup: resolve(__dirname, "popup.html"),
         options: resolve(__dirname, "options.html"),
+        // Don't build content.js - just copy it
       },
       output: {
         entryFileNames: "[name].js",
