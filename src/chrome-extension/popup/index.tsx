@@ -2,6 +2,7 @@ import "../global.css";
 import { useState, useEffect } from 'react';
 import { sendDomToN8n } from '../services/n8nApi';
 
+
 export const Popup = () => {
   const [dom, setDom] = useState<string>('');
   const [textContent, setTextContent] = useState<string>('');
@@ -28,12 +29,60 @@ export const Popup = () => {
     return text;
   };
 
+  // Function to get Asia/Colombo time
+  const getColomboTime = (): string => {
+    return new Date().toLocaleString('en-US', {
+      timeZone: 'Asia/Colombo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+  };
+
+  const sendToN8n = async (urlToSend: string, textToSend: string) => {
+    setSending(true);
+    setApiStatus('Sending...');
+    
+    try {
+      const colomboTime = getColomboTime();
+      
+      const result = await sendDomToN8n({
+        url: urlToSend,
+        textContent: textToSend,
+        timestamp: new Date().toISOString(),
+        colomboTime: colomboTime  // Asia/Colombo time added
+      });
+
+      if (result.success) {
+        setApiStatus('✅ Successfully sent to n8n!');
+        setTimeout(() => setApiStatus(''), 3000);
+      } else {
+        setApiStatus(`❌ Error: ${result.error}`);
+      }
+    } catch (error) {
+      setApiStatus(`❌ Failed to send: ${error}`);
+    } finally {
+      setSending(false);
+    }
+  };
+
   useEffect(() => {
     chrome.storage.local.get(['pageDom', 'pageUrl'], (result) => {
       if (result.pageDom) {
-        setDom(result.pageDom);
-        setTextContent(stripHtmlTags(result.pageDom));
-        setUrl(result.pageUrl || '');
+        const domContent = result.pageDom;
+        const text = stripHtmlTags(domContent);
+        const pageUrl = result.pageUrl || '';
+        
+        setDom(domContent);
+        setTextContent(text);
+        setUrl(pageUrl);
+        
+        // Auto-send on load
+        sendToN8n(pageUrl, text);
       }
       setLoading(false);
     });
@@ -44,55 +93,9 @@ export const Popup = () => {
     alert('Copied to clipboard!');
   };
 
-  // const sendToN8n = async () => {
-  //   setSending(true);
-  //   setApiStatus('Sending...');
-    
-  //   try {
-  //     const result = await sendDomToN8n({
-  //       url: url,
-  //       dom: dom,
-  //       textContent: textContent,
-  //       timestamp: new Date().toISOString()
-  //     });
-
-  //     if (result.success) {
-  //       setApiStatus('✅ Successfully sent to n8n!');
-  //       setTimeout(() => setApiStatus(''), 3000);
-  //     } else {
-  //       setApiStatus(`❌ Error: ${result.error}`);
-  //     }
-  //   } catch (error) {
-  //     setApiStatus(`❌ Failed to send: ${error}`);
-  //   } finally {
-  //     setSending(false);
-  //   }
-  // };
-
-  const sendToN8n = async () => {
-  setSending(true);
-  setApiStatus('Sending...');
-  
-  try {
-    const result = await sendDomToN8n({
-      url: url,
-      textContent: textContent,  // Only sending stripped text
-      timestamp: new Date().toISOString()
-    });
-
-    if (result.success) {
-      setApiStatus('✅ Successfully sent to n8n!');
-      setTimeout(() => setApiStatus(''), 3000);
-    } else {
-      setApiStatus(`❌ Error: ${result.error}`);
-    }
-  } catch (error) {
-    setApiStatus(`❌ Failed to send: ${error}`);
-  } finally {
-    setSending(false);
-  }
-};
-  
+  const handleManualSend = () => {
+    sendToN8n(url, textContent);
+  };
 
   return (
     <div className="p-4 h-full overflow-hidden flex flex-col">
@@ -121,7 +124,7 @@ export const Popup = () => {
               {showRaw ? 'Show Text Only' : 'Show Raw HTML'}
             </button>
             <button 
-              onClick={sendToN8n}
+              onClick={handleManualSend}
               disabled={sending}
               className={`${
                 sending 

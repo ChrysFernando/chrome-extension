@@ -1,39 +1,31 @@
-import axios from 'axios';
-
-// Configure your n8n webhook URL
-const N8N_WEBHOOK_URL = 'https://dangelo-acquirable-informally.ngrok-free.dev/webhook-test/chrome-capture';
-
 interface DomData {
   url: string;
-//   dom: string;
   textContent: string;
   timestamp: string;
+  colomboTime: string;
 }
 
+interface ApiResponse {
+  success: boolean;
+  error?: string;
+}
 
-export const sendDomToN8n = async (data: DomData) => {
+export const sendDomToN8n = async (data: DomData): Promise<ApiResponse> => {
   try {
-    const response = await axios.post(N8N_WEBHOOK_URL, data, {
+    const response = await fetch('https://automation.taskforceai.tech/webhook/exely', {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      timeout: 30000, // 30 seconds timeout
+      body: JSON.stringify(data),
     });
-    
-    return {
-      success: true,
-      data: response.data,
-      status: response.status
-    };
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error('N8N API Error:', error.response?.data || error.message);
-      return {
-        success: false,
-        error: error.response?.data || error.message,
-        status: error.response?.status
-      };
+
+    if (response.ok) {
+      return { success: true };
+    } else {
+      return { success: false, error: `HTTP ${response.status}` };
     }
-    throw error;
+  } catch (error) {
+    return { success: false, error: String(error) };
   }
 };

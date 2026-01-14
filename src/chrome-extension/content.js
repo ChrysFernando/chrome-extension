@@ -1,7 +1,7 @@
 // content.js
 console.log("DOM Reader Extension: Content script loaded");
 
-const N8N_WEBHOOK_URL = 'https://dangelo-acquirable-informally.ngrok-free.dev/webhook-test/chrome-capture';
+const N8N_WEBHOOK_URL = 'https://automation.taskforceai.tech/webhook/exely';
 
 const stripHtmlTags = (html) => {
   const doc = new DOMParser().parseFromString(html, 'text/html');
