@@ -1,26 +1,30 @@
 {
   "manifest_version": 3,
-  "name": "Chrome Extension Starter",
+  "name": "DOM Scraper Auto",
   "version": "1.0.0",
+  "description": "Automatically scrape and send page data to n8n workflows",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "notifications"
+  ],
+  /*you can add the exely avail url here */
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+    "all_frames": true,
+    "run_at": "document_end"
+    }
+  ],
   "action": {
     "default_popup": "popup.html"
   },
   "options_page": "options.html",
-  "description": "This is the description of your extension",
-  "permissions": [
-    "activeTab",
-    "scripting",
-    "storage"
-  ],
-  "host_permissions": [
-    "https://exely.com/*"
-  ],
-  "content_scripts": [
-    {
-      "matches": ["https://exely.com/*"],
-      "js": ["content.js"]
-    }
-  ],
   "icons": {
     "16": "public/16.png",
     "32": "public/32.png",
